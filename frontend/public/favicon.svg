@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <rect width="32" height="32" rx="9" fill="#a5695c" />
+  <text
+    x="50%"
+    y="53%"
+    text-anchor="middle"
+    dominant-baseline="middle"
+    font-family="'Space Grotesk', 'Segoe UI', sans-serif"
+    font-weight="600"
+    font-size="18"
+    fill="#efe6e2"
+  >D</text>
+</svg>
