@@ -29,7 +29,7 @@ function timeAgo(dateStr) {
   return `${days}d ago`;
 }
 
-export default function Sidebar() {
+export default function Sidebar({ open = false, onClose = () => {} }) {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -69,6 +69,7 @@ export default function Sidebar() {
     // won't reset since the route doesn't remount.
     window.dispatchEvent(new Event("chat:new"));
     navigate("/", { replace: true });
+    onClose();
   };
 
   const handlePin = async (e, session) => {
@@ -108,15 +109,40 @@ export default function Sidebar() {
   };
 
   return (
-    <aside className="w-72 shrink-0 h-[calc(100vh-2rem)] sticky top-4 glass-strong rounded-3xl flex flex-col overflow-hidden">
-      <div className="px-5 py-5 flex items-center gap-2 border-b border-ink/10">
-        <span className="w-7 h-7 rounded-lg bg-accent text-paper flex items-center justify-center font-display text-sm font-semibold">
-          D
-        </span>
-        <span className="font-display text-lg tracking-tight text-ink">
-          doubt<span className="text-accent">/</span>tutor
-        </span>
-      </div>
+    <>
+      {/* Backdrop — only rendered (and only intercepts taps) on mobile while
+          the drawer is open; desktop never shows it since the sidebar is
+          always visible there. */}
+      {open && (
+        <div
+          onClick={onClose}
+          aria-hidden="true"
+          className="fixed inset-0 z-40 bg-ink/40 backdrop-blur-[1px] lg:hidden"
+        />
+      )}
+
+      <aside
+        className={`fixed inset-y-0 left-0 z-50 w-[85vw] max-w-72 h-[100dvh] glass-strong flex flex-col overflow-hidden transition-transform duration-300 ease-[var(--ease-drawer)]
+        ${open ? "translate-x-0" : "-translate-x-full"}
+        lg:static lg:translate-x-0 lg:z-auto lg:w-72 lg:max-w-none lg:shrink-0 lg:h-[calc(100dvh-2rem)] lg:rounded-3xl`}
+      >
+        <div className="px-5 py-5 flex items-center gap-2 border-b border-ink/10">
+          <span className="w-7 h-7 rounded-lg bg-accent text-paper flex items-center justify-center font-display text-sm font-semibold">
+            D
+          </span>
+          <span className="font-display text-lg tracking-tight text-ink">
+            doubt<span className="text-accent">/</span>tutor
+          </span>
+          <button
+            onClick={onClose}
+            aria-label="Close menu"
+            className="press ml-auto w-8 h-8 rounded-full flex items-center justify-center text-ink/60 hover:text-ink hover:bg-ink/5 lg:hidden"
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4.5 h-4.5">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </div>
 
       <nav className="px-3 pt-4 space-y-1">
         {links.map((link) => (
@@ -124,6 +150,7 @@ export default function Sidebar() {
             key={link.to}
             to={link.to}
             end={link.end}
+            onClick={onClose}
             className={({ isActive }) =>
               `press flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors duration-150 ${
                 isActive
@@ -163,7 +190,10 @@ export default function Sidebar() {
         {recent.map((p, i) => (
           <div
             key={p.sessionId}
-            onClick={() => navigate(`/?session=${p.sessionId}`)}
+            onClick={() => {
+              navigate(`/?session=${p.sessionId}`);
+              onClose();
+            }}
             style={{ "--stagger-index": Math.min(i, 8) }}
             className={`stagger-in group relative w-full text-left px-3 py-2 rounded-xl transition-colors duration-150 cursor-pointer ${
               activeSessionId === p.sessionId ? "bg-ink/8" : "hover:bg-ink/5"
@@ -255,6 +285,7 @@ export default function Sidebar() {
           </button>
         )}
       </div>
-    </aside>
+      </aside>
+    </>
   );
 }
