@@ -137,6 +137,7 @@ body {
   --accent: 165 105 92;
   --signal: 111 138 101;
   --flag: 161 63 50;
+  --paper: 255 255 255;
 }
 .paper-card::before {
   content: "";
