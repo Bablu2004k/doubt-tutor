@@ -47,7 +47,7 @@ export default function SolutionView({
   ];
 
   return (
-    <div className="glass rounded-2xl p-6">
+    <div className="paper-card p-6">
       <div className="flex items-center justify-between mb-3 gap-2">
         <DownloadMenu title={topic || "Doubt answer"} content={solution} />
         <div className="flex items-center gap-1">

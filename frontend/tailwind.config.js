@@ -4,21 +4,22 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Same warm palette as before, pulled a notch darker so surfaces
-        // read as warm off-white/greige glass instead of almost-pure-white
-        // — a moderate dim, not a full dark-mode inversion (text stays
-        // dark-on-light throughout).
-        ink: "#4a332b",        // deep espresso - primary text on glass
-        forest: "#8c6259",     // blend of terracotta/espresso - user bubble
-        accent: "#a5695c",     // terracotta, deepened slightly to read against darker glass
-        signal: "#6f8865",     // muted sage (new, functional) - correct-answer accent
-        flag: "#a13f32",       // muted brick (new, functional) - wrong-answer accent
-        paper: "#efe6e2",      // warm greige - glass base, light text on dark accents
-        cloud: "#c9b8bd",      // deepened dusty lavender - app background wash
-        slate: "#75564d",      // muted mocha - secondary/muted text
-        mauve: "#b88f8c",      // dusty rose, deepened - decorative accents, badges, blobs
-        lilac: "#b39cb2",      // deepened soft lilac - decorative accents, badges, blobs
-        glass: "#efe6e2",      // base tone for frosted glass cards (used via .glass)
+        // Every color is backed by a CSS variable (set in index.css for
+        // :root and [data-theme="dark"]), using the "R G B" triplet format
+        // so Tailwind's opacity modifiers (e.g. bg-accent/10) keep working.
+        // This means the whole app reskins by flipping one attribute on
+        // <html> — no component classNames need to change between themes.
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        forest: "rgb(var(--forest) / <alpha-value>)",
+        accent: "rgb(var(--accent) / <alpha-value>)",
+        signal: "rgb(var(--signal) / <alpha-value>)",
+        flag: "rgb(var(--flag) / <alpha-value>)",
+        paper: "rgb(var(--paper) / <alpha-value>)",
+        cloud: "rgb(var(--cloud) / <alpha-value>)",
+        slate: "rgb(var(--slate) / <alpha-value>)",
+        mauve: "rgb(var(--mauve) / <alpha-value>)",
+        lilac: "rgb(var(--lilac) / <alpha-value>)",
+        glass: "rgb(var(--paper) / <alpha-value>)",
       },
       fontFamily: {
         display: ["'Space Grotesk'", "sans-serif"],

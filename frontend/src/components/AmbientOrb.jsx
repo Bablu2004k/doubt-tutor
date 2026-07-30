@@ -66,8 +66,7 @@ export default function AmbientOrb({ active = false }) {
               maxWidth: 560,
               height: "38vw",
               maxHeight: 560,
-              background:
-                "radial-gradient(circle at 35% 30%, rgba(175,127,115,0.55), rgba(175,127,115,0) 70%)",
+              background: "radial-gradient(circle at 35% 30%, rgb(var(--orb-a) / 0.5), rgb(var(--orb-a) / 0) 70%)",
             }}
           />
           <div
@@ -80,8 +79,7 @@ export default function AmbientOrb({ active = false }) {
               height: "30vw",
               maxHeight: 440,
               animationDelay: "-4s",
-              background:
-                "radial-gradient(circle at 60% 40%, rgba(124,148,115,0.4), rgba(124,148,115,0) 70%)",
+              background: "radial-gradient(circle at 60% 40%, rgb(var(--orb-c) / 0.4), rgb(var(--orb-c) / 0) 70%)",
             }}
           />
           <div
@@ -94,8 +92,7 @@ export default function AmbientOrb({ active = false }) {
               height: "24vw",
               maxHeight: 340,
               animationDelay: "-9s",
-              background:
-                "radial-gradient(circle at 45% 55%, rgba(220,199,219,0.65), rgba(220,199,219,0) 70%)",
+              background: "radial-gradient(circle at 45% 55%, rgb(var(--orb-b) / 0.55), rgb(var(--orb-b) / 0) 70%)",
             }}
           />
         </div>

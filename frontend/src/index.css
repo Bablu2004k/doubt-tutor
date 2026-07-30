@@ -9,23 +9,79 @@ html {
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+
+  /* ---- Theme tokens ------------------------------------------------
+     "R G B" triplets (no rgb() wrapper) so Tailwind's <alpha-value>
+     opacity modifiers work, e.g. bg-accent/10. Light theme is the
+     default; [data-theme="dark"] overrides below flip the whole app. */
+  --ink: 32 29 46;         /* primary text — near-black indigo */
+  --forest: 91 75 214;     /* user bubble background — deep indigo */
+  --accent: 106 92 240;    /* primary action color — indigo */
+  --signal: 28 138 90;     /* correct-answer green */
+  --flag: 194 58 114;      /* wrong-answer pink */
+  --paper: 255 255 255;    /* text-on-accent, dropdown/menu surfaces */
+  --cloud: 244 242 251;    /* app background wash */
+  --slate: 107 103 128;    /* secondary/muted text */
+  --mauve: 167 139 250;    /* decorative accent */
+  --lilac: 200 147 232;    /* decorative accent */
+
+  /* surfaces that intentionally do NOT invert with theme (see .glass) */
+  --glass-tint: 255 255 255;
+  --glass-shadow: 74 51 43;
+
+  /* the ambient/hero orb's three-color blend */
+  --orb-a: 139 123 240;
+  --orb-b: 200 147 232;
+  --orb-c: 126 200 227;
+
+  /* the four doubt-category chip tints */
+  --chip1-bg: 236 233 253; --chip1-fg: 91 75 214;
+  --chip2-bg: 253 234 241; --chip2-fg: 194 58 114;
+  --chip3-bg: 232 247 239; --chip3-fg: 28 138 90;
+  --chip4-bg: 254 243 228; --chip4-fg: 185 119 14;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: 238 240 244;
+  --forest: 31 184 168;
+  --accent: 45 212 191;
+  --signal: 111 227 180;
+  --flag: 242 143 200;
+  --paper: 20 24 34;
+  --cloud: 10 12 16;
+  --slate: 154 161 176;
+  --mauve: 52 224 201;
+  --lilac: 31 184 168;
+
+  --glass-tint: 20 24 34;
+  --glass-shadow: 0 0 0;
+
+  --orb-a: 31 184 168;
+  --orb-b: 22 112 107;
+  --orb-c: 11 77 74;
+
+  --chip1-bg: 20 48 79;  --chip1-fg: 124 196 255;
+  --chip2-bg: 58 23 48;  --chip2-fg: 242 143 200;
+  --chip3-bg: 15 58 44;  --chip3-fg: 111 227 180;
+  --chip4-bg: 58 42 15;  --chip4-fg: 255 196 107;
 }
 
 body {
   font-family: "Inter", sans-serif;
-  background-color: #d6c6ca;
+  background-color: rgb(var(--cloud));
   background-image:
-    radial-gradient(ellipse 900px 650px at 8% -10%, rgba(184, 143, 140, 0.6), transparent 60%),
-    radial-gradient(ellipse 750px 550px at 100% 10%, rgba(179, 156, 178, 0.6), transparent 55%),
-    radial-gradient(ellipse 800px 700px at 45% 115%, rgba(165, 105, 92, 0.3), transparent 60%),
-    radial-gradient(ellipse 600px 500px at 50% 50%, rgba(239, 230, 226, 0.65), transparent 65%);
+    radial-gradient(ellipse 900px 650px at 8% -10%, rgb(var(--orb-a) / 0.22), transparent 60%),
+    radial-gradient(ellipse 750px 550px at 100% 10%, rgb(var(--orb-b) / 0.2), transparent 55%),
+    radial-gradient(ellipse 800px 700px at 45% 115%, rgb(var(--orb-c) / 0.14), transparent 60%);
   background-attachment: fixed;
   min-height: 100vh;
+  transition: background-color 0.3s ease;
 }
 
 ::selection {
-  background-color: #a5695c;
-  color: #efe6e2;
+  background-color: rgb(var(--accent));
+  color: rgb(var(--paper));
 }
 
 /* Slim, quiet scrollbars for the chat pane and sidebar */
@@ -33,30 +89,66 @@ body {
   width: 6px;
 }
 .themed-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(74, 51, 43, 0.28);
+  background-color: rgb(var(--ink) / 0.22);
   border-radius: 9999px;
 }
 .themed-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 
-/* Frosted-glass card surface: the core visual language of the app now */
+/* Frosted-glass card surface: the core visual language of the app.
+   Tinted from --glass-tint (not --paper) so it reads as a translucent
+   pane of the app's own chrome in both themes. */
 .glass {
-  background-color: rgba(239, 230, 226, 0.4);
+  background-color: rgb(var(--glass-tint) / 0.4);
   backdrop-filter: blur(24px) saturate(160%);
   -webkit-backdrop-filter: blur(24px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 8px 32px rgba(74, 51, 43, 0.16);
+  border: 1px solid rgb(255 255 255 / 0.1);
+  box-shadow: 0 8px 32px rgb(var(--glass-shadow) / 0.16);
 }
 
 /* A slightly deeper glass, for panels that sit on top of other glass
    (e.g. the sidebar over the page backdrop) */
 .glass-strong {
-  background-color: rgba(239, 230, 226, 0.55);
+  background-color: rgb(var(--glass-tint) / 0.65);
   backdrop-filter: blur(28px) saturate(160%);
   -webkit-backdrop-filter: blur(28px) saturate(160%);
-  border: 1px solid rgba(255, 255, 255, 0.5);
-  box-shadow: 0 8px 32px rgba(74, 51, 43, 0.2);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  box-shadow: 0 8px 32px rgb(var(--glass-shadow) / 0.2);
+}
+
+/* A fixed warm "notebook paper" surface for worked solutions — this one
+   deliberately does NOT invert in dark mode, the same way a physical
+   page stays light no matter how dark the room is. Keeps solution-prose
+   below (long, hand-tuned color set) simple and always readable. */
+.paper-card {
+  background-color: #f2ede1;
+  background-image: repeating-linear-gradient(#f2ede1, #f2ede1 27px, rgb(74 106 154 / 0.14) 28px, #f2ede1 29px);
+  border-radius: 4px 14px 14px 14px;
+  box-shadow: 0 8px 28px rgb(0 0 0 / 0.16);
+  position: relative;
+  padding-left: 28px !important;
+  /* Fixed local overrides: everything inside this card (text-ink,
+     text-slate, text-accent, bg-signal/10, etc.) reads these instead of
+     the app-wide theme variables, so the "paper" stays legible whether
+     the surrounding app is in light or dark mode. */
+  --ink: 36 30 25;
+  --slate: 117 86 77;
+  --accent: 165 105 92;
+  --signal: 111 138 101;
+  --flag: 161 63 50;
+}
+.paper-card::before {
+  content: "";
+  position: absolute;
+  left: 16px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: rgb(161 63 50 / 0.4);
+}
+html[data-theme="dark"] .paper-card {
+  box-shadow: 0 8px 32px rgb(0 0 0 / 0.45);
 }
 
 /* Flowing solution text — mirrors a clean, natural markdown answer */
@@ -299,7 +391,7 @@ body {
 .ambient-orb__ring {
   position: absolute;
   border-radius: 9999px;
-  border: 1px solid rgba(175, 127, 115, 0.35);
+  border: 1px solid rgb(var(--orb-a) / 0.35);
   animation: orb-pulse-ring 2.6s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
 }
 
@@ -327,6 +419,118 @@ body {
     animation: none !important;
   }
 }
+
+/* ---- Hero orb: the discrete, crisp "breathing blob" used in the empty
+   chat state — a small glossy sphere with a soft outer glow ring, a
+   drifting glare highlight, and slowly wavy (not perfectly circular)
+   edges so it reads as alive rather than a static icon. ---- */
+.hero-orb-wrap {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  margin: 0 auto 22px;
+}
+.hero-orb-glow {
+  position: absolute;
+  inset: -24px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgb(var(--orb-a) / 0.55) 0%, transparent 70%);
+  filter: blur(16px);
+  animation: hero-orb-breathe 4.5s var(--ease-in-out) infinite;
+}
+.hero-orb-ring {
+  position: absolute;
+  inset: -8px;
+  border: 1px solid rgb(var(--orb-a) / 0.4);
+  animation: hero-orb-ring 4.5s var(--ease-in-out) infinite, hero-orb-blob 9s var(--ease-in-out) infinite -1.2s;
+}
+.hero-orb {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  background:
+    radial-gradient(circle at 50% 50%, rgb(var(--orb-b) / 0.65) 0%, transparent 46%),
+    radial-gradient(circle at 30% 25%, #ffffff 0%, transparent 8%),
+    conic-gradient(from 220deg at 50% 50%, rgb(var(--orb-a)), rgb(var(--orb-b)), rgb(var(--orb-c)), rgb(var(--orb-a)));
+  box-shadow:
+    inset 0 -8px 22px rgb(var(--orb-c) / 0.6),
+    inset 0 6px 18px rgb(255 255 255 / 0.25),
+    0 0 30px rgb(var(--orb-a) / 0.4);
+  animation: hero-orb-bob 4.5s var(--ease-in-out) infinite, hero-orb-blob 9s var(--ease-in-out) infinite;
+  overflow: hidden;
+}
+.hero-orb::before {
+  content: "";
+  position: absolute;
+  top: 14%;
+  left: 20%;
+  width: 34%;
+  height: 22%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgb(255 255 255 / 0.8) 0%, transparent 70%);
+  filter: blur(2px);
+  animation: hero-orb-drift 4.5s var(--ease-in-out) infinite;
+}
+.hero-orb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 100%, rgb(var(--orb-c) / 0.7) 0%, transparent 55%);
+  opacity: 0.7;
+}
+@keyframes hero-orb-bob {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-5px) scale(1.03); }
+}
+@keyframes hero-orb-blob {
+  0%   { border-radius: 58% 42% 39% 61% / 55% 45% 55% 45%; }
+  25%  { border-radius: 45% 55% 60% 40% / 40% 62% 38% 60%; }
+  50%  { border-radius: 62% 38% 47% 53% / 58% 40% 60% 42%; }
+  75%  { border-radius: 40% 60% 55% 45% / 45% 55% 45% 55%; }
+  100% { border-radius: 58% 42% 39% 61% / 55% 45% 55% 45%; }
+}
+@keyframes hero-orb-breathe {
+  0%, 100% { opacity: 0.5; transform: scale(0.92); }
+  50% { opacity: 0.95; transform: scale(1.08); }
+}
+@keyframes hero-orb-ring {
+  0%, 100% { opacity: 0.25; transform: scale(0.97); }
+  50% { opacity: 0.65; transform: scale(1.04); }
+}
+@keyframes hero-orb-drift {
+  0%, 100% { transform: rotate(-18deg) translate(0, 0); }
+  50% { transform: rotate(-12deg) translate(3px, -4px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .hero-orb-glow, .hero-orb-ring, .hero-orb, .hero-orb::before {
+    animation: none !important;
+  }
+}
+
+/* ---- Doubt-category chips (empty-state shortcuts) — four tinted
+   variants, each backed by theme-reactive tokens. ---- */
+.doubt-chip {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  text-align: left;
+  min-width: 148px;
+  cursor: pointer;
+  transition: transform 160ms var(--ease-out), filter 160ms ease;
+}
+.doubt-chip:hover {
+  filter: brightness(1.04);
+}
+.doubt-chip .doubt-chip__title { font-weight: 600; }
+.doubt-chip .doubt-chip__sub { font-size: 10.5px; opacity: 0.75; font-weight: 400; }
+.doubt-chip--explain { background: rgb(var(--chip1-bg)); color: rgb(var(--chip1-fg)); }
+.doubt-chip--debug   { background: rgb(var(--chip2-bg)); color: rgb(var(--chip2-fg)); }
+.doubt-chip--quiz    { background: rgb(var(--chip3-bg)); color: rgb(var(--chip3-fg)); }
+.doubt-chip--roadmap { background: rgb(var(--chip4-bg)); color: rgb(var(--chip4-fg)); }
 
 textarea {
   font-family: inherit;

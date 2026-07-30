@@ -6,6 +6,7 @@ import ChatComposer from "../components/ChatComposer.jsx";
 import SolutionView from "../components/SolutionView.jsx";
 import QuizCard from "../components/QuizCard.jsx";
 import AmbientOrb from "../components/AmbientOrb.jsx";
+import HeroOrb from "../components/HeroOrb.jsx";
 import { problemApi, attemptApi } from "../api/api.js";
 
 let idCounter = 0;
@@ -200,22 +201,28 @@ export default function Home() {
           </div>
         ) : isEmpty ? (
           <div className="h-full flex flex-col items-center justify-center px-6 text-center relative z-[1]">
-            <span className="w-12 h-12 rounded-2xl bg-accent text-paper flex items-center justify-center font-display text-xl mb-4 shadow-sm animate-pulse">
-              D
-            </span>
-            <p className="font-display text-2xl text-ink">{greeting()}! Stuck on something?</p>
+            <HeroOrb />
+            <p className="font-display text-2xl text-ink">
+              {greeting()}. What's <span className="text-accent">stuck</span> in your head today?
+            </p>
             <p className="text-slate mt-1 max-w-sm">
               Upload a photo of your problem or type it in — I'll work through it with you, then quiz you on it.
             </p>
-            <div className="flex flex-wrap justify-center gap-2 mt-5">
-              {["Explain recursion with an example", "Debug my segfault", "Quiz me on Big-O"].map((s, i) => (
+            <div className="flex flex-wrap justify-center gap-2 mt-6">
+              {[
+                { title: "Explain a concept", sub: "Break it down simply", cls: "doubt-chip--explain", text: "Explain recursion with an example" },
+                { title: "Debug my code", sub: "Paste or photo it", cls: "doubt-chip--debug", text: "Debug my segfault" },
+                { title: "Quiz me", sub: "Test what I know", cls: "doubt-chip--quiz", text: "Quiz me on Big-O" },
+                { title: "Build a roadmap", sub: "Plan my prep", cls: "doubt-chip--roadmap", text: "Help me build a DSA prep roadmap" },
+              ].map((c, i) => (
                 <button
-                  key={s}
-                  onClick={() => handleSend({ text: s, file: null })}
+                  key={c.title}
+                  onClick={() => handleSend({ text: c.text, file: null })}
                   style={{ "--stagger-index": i }}
-                  className="press stagger-in text-xs px-3 py-1.5 rounded-full glass text-ink/70 transition-colors duration-150 hover:text-accent"
+                  className={`press stagger-in doubt-chip ${c.cls}`}
                 >
-                  {s}
+                  <span className="doubt-chip__title">{c.title}</span>
+                  <span className="doubt-chip__sub">{c.sub}</span>
                 </button>
               ))}
             </div>
@@ -230,11 +237,11 @@ export default function Home() {
                       <img
                         src={m.imagePreview}
                         alt="Uploaded problem"
-                        className="max-h-56 rounded-xl mb-2 border border-paper/20"
+                        className="max-h-56 rounded-xl mb-2 border border-white/20"
                       />
                     )}
                     {m.fileName && (
-                      <div className="flex items-center gap-2 bg-paper/15 rounded-xl px-3 py-2 mb-2 text-paper/90">
+                      <div className="flex items-center gap-2 bg-white/15 rounded-xl px-3 py-2 mb-2 text-white/90">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4 shrink-0">
                           <path
                             strokeLinecap="round"
