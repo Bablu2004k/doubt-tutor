@@ -10,14 +10,15 @@ export const problemApi = {
   // chat's sessionId (or leave it undefined to start a brand-new chat).
   createFromText: (text, subject, sessionId) =>
     axiosClient.post("/problems", { text, subject, sessionId }),
-  createFromImage: (file, subject, sessionId) => {
+  createFromImage: (file, subject, sessionId, text) => {
     const form = new FormData();
     form.append("image", file);
+    if (text) form.append("text", text);
     form.append("subject", subject);
     if (sessionId) form.append("sessionId", sessionId);
-    return axiosClient.post("/problems", form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    // Do NOT set Content-Type manually: the browser must add the multipart
+    // boundary itself, otherwise multer rejects the upload.
+    return axiosClient.post("/problems", form);
   },
   list: () => axiosClient.get("/problems"),
   getSession: (sessionId) => axiosClient.get(`/problems/session/${sessionId}`),

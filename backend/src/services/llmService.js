@@ -136,7 +136,7 @@ function toGeminiParts(content) {
   }
 
   return content.map((block) => {
-    if (block.type === "image") {
+    if (block.type === "image" || block.type === "file") {
       return {
         inline_data: {
           mime_type: block.source?.media_type || "image/jpeg",
@@ -154,9 +154,10 @@ function toGeminiParts(content) {
  * a topic tag, and an ordered list of solution steps.
  * @param {{ text?: string, imageBase64?: string, mediaType?: string, subject: string }} input
  */
-export async function breakDownProblem({ text, imageBase64, mediaType, subject }) {
-  const system = `You are an outstanding CS/DSA tutor answering a student's
-doubt. Given their problem (as an image or as text), respond with ONLY a
+export async function breakDownProblem({ text, fileBase64, mediaType, subject }) {
+  const system = `You are an outstanding tutor, expert in every subject (science, maths,
+humanities, languages, commerce, computer science, general knowledge, etc.),
+answering a student's doubt. Given their problem (as an image, a document, or as text), respond with ONLY a
 JSON object, no preamble, no markdown fences, in exactly this shape:
 {
   "problemStatement": string,   // cleaned-up restatement of the problem
@@ -186,15 +187,15 @@ Be thorough but not padded — every sentence should earn its place. Close
 with the concrete answer/result clearly stated, not buried in the middle.`;
 
   const content = [];
-  if (imageBase64) {
+  if (fileBase64) {
     content.push({
-      type: "image",
-      source: { type: "base64", media_type: mediaType || "image/jpeg", data: imageBase64 },
+      type: "file",
+      source: { type: "base64", media_type: mediaType || "image/jpeg", data: fileBase64 },
     });
   }
   content.push({
     type: "text",
-    text: text || `Subject: ${subject}. Break down the problem shown in the image.`,
+    text: text || `Answer the question/problem shown in the attached file. Subject hint: ${subject}.`,
   });
 
   return callGemini({
@@ -207,9 +208,12 @@ with the concrete answer/result clearly stated, not buried in the middle.`;
 /**
  * Generates a practice question for a given topic and difficulty.
  */
-export async function generatePracticeQuestion({ topic, subject, difficulty = "medium" }) {
-  const system = `You are a CS/DSA tutor generating one practice question.
-Respond with ONLY a JSON object, no preamble, no markdown fences:
+export async function generatePracticeQuestion({ topic, subject, context, difficulty = "medium" }) {
+  const system = `You are an expert tutor generating one practice question. The topic can be
+from ANY subject (science, maths, history, languages, general knowledge,
+programming, etc.) — stay strictly within the subject of the given topic and
+original question; never default to computer science unless the topic is
+actually about computer science. Respond with ONLY a JSON object, no preamble, no markdown fences:
 {
   "questionText": string,
   "options": string[],        // 4 options for MCQ, or [] for short-answer
@@ -217,8 +221,9 @@ Respond with ONLY a JSON object, no preamble, no markdown fences:
   "explanation": string
 }`;
 
-  const userMsg = `Subject: ${subject}. Topic: ${topic}. Difficulty: ${difficulty}.
-Generate one question that tests understanding of this specific topic.`;
+  const userMsg = `Topic: ${topic}.${subject && subject !== "General" ? ` Subject: ${subject}.` : ""}
+${context ? `The student's original doubt was: ${context}\n` : ""}Difficulty: ${difficulty}.
+Generate one question that tests understanding of this specific topic, in the same subject area as the student's doubt.`;
 
   return callGemini({
     system,

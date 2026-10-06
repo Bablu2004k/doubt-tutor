@@ -8,10 +8,10 @@ const problemSchema = new mongoose.Schema(
     // sent in that same conversation, so follow-ups don't spawn new
     // "Recent doubts" entries in the sidebar.
     sessionId: { type: String, required: true, index: true },
-    sourceType: { type: String, enum: ["image", "text"], required: true },
+    sourceType: { type: String, enum: ["image", "text", "document"], required: true },
     rawText: { type: String }, // typed-in problem, if sourceType === "text"
     imageUrl: { type: String }, // stored path/URL, if sourceType === "image"
-    subject: { type: String, default: "DSA" }, // e.g. DSA, C++, OS, DBMS
+    subject: { type: String, default: "General" }, // any subject
     topic: { type: String, required: true }, // e.g. "Recursion - base case"
     problemStatement: { type: String, required: true }, // LLM's cleaned-up restatement
     solution: { type: String, required: true }, // full answer, flowing markdown

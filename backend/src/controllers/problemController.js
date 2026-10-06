@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
 import crypto from "crypto";
+import path from "path";
+import mammoth from "mammoth";
 import Problem from "../models/Problem.js";
 import Question from "../models/Question.js";
 import { breakDownProblem, generatePracticeQuestion } from "../services/llmService.js";
@@ -11,7 +13,7 @@ import { breakDownProblem, generatePracticeQuestion } from "../services/llmServi
 // (first message of a brand-new chat) we mint one here and hand it back.
 export async function createProblem(req, res, next) {
   try {
-    const { text, subject = "DSA", sessionId: incomingSessionId } = req.body;
+    const { text, subject = "General", sessionId: incomingSessionId } = req.body;
     const file = req.file;
 
     if (!text && !file) {
@@ -20,22 +22,45 @@ export async function createProblem(req, res, next) {
 
     const sessionId = incomingSessionId || crypto.randomUUID();
 
-    const isImage = file?.mimetype.startsWith("image/");
-    const fileText = file && !isImage ? file.buffer.toString("utf-8") : null;
+    const ext = path.extname(file?.originalname || "").toLowerCase();
+    const mime = file?.mimetype || "";
+    const isImage = !!file && (mime.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"].includes(ext));
+    const isPdf = !!file && (mime === "application/pdf" || ext === ".pdf");
+    const isDocx = !!file && ext === ".docx";
 
-    const llmResult = isImage
-      ? await breakDownProblem({
-          imageBase64: file.buffer.toString("base64"),
-          mediaType: file.mimetype,
-          subject,
-        })
-      : await breakDownProblem({ text: fileText || text, subject });
+    // Plain-text style documents are read directly; docx is extracted.
+    let fileText = null;
+    if (file && !isImage && !isPdf) {
+      if (isDocx) {
+        const { value } = await mammoth.extractRawText({ buffer: file.buffer });
+        fileText = value;
+      } else {
+        fileText = file.buffer.toString("utf-8");
+      }
+      if (!fileText.trim()) {
+        return res.status(400).json({ message: "Couldn't read any text from that document" });
+      }
+    }
+
+    // Combine whatever the user typed with the attached document text so
+    // both reach the model (the typed message was previously dropped).
+    const combinedText = [text, fileText].filter(Boolean).join("\n\n");
+
+    const llmResult =
+      isImage || isPdf
+        ? await breakDownProblem({
+            fileBase64: file.buffer.toString("base64"),
+            mediaType: isPdf ? "application/pdf" : mime.startsWith("image/") ? mime : "image/jpeg",
+            text,
+            subject,
+          })
+        : await breakDownProblem({ text: combinedText, subject });
 
     const problem = await Problem.create({
       user: req.userId,
       sessionId,
-      sourceType: isImage ? "image" : "text",
-      rawText: fileText || text,
+      sourceType: isImage ? "image" : isPdf ? "document" : "text",
+      rawText: isImage ? text : isPdf ? [text, `[PDF: ${file.originalname}]`].filter(Boolean).join("\n") : combinedText,
       subject,
       topic: llmResult.topic,
       problemStatement: llmResult.problemStatement,
@@ -145,6 +170,7 @@ export async function createQuestionForProblem(req, res, next) {
     const llmResult = await generatePracticeQuestion({
       topic: problem.topic,
       subject: problem.subject,
+      context: (problem.problemStatement || "").slice(0, 600),
       difficulty,
     });
 

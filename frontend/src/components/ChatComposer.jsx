@@ -155,7 +155,7 @@ export default function ChatComposer({ onSend, loading }) {
                   </span>
                   <span>
                     File
-                    <span className="block text-xs text-slate">Upload a .txt of your problem</span>
+                    <span className="block text-xs text-slate">PDF, DOCX, TXT or MD</span>
                   </span>
                 </button>
               </div>
@@ -171,7 +171,7 @@ export default function ChatComposer({ onSend, loading }) {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".txt,text/plain"
+              accept=".pdf,.docx,.txt,.md,application/pdf,text/plain"
               className="hidden"
               onChange={(e) => pickFile(e.target.files?.[0])}
             />
@@ -211,7 +211,7 @@ export default function ChatComposer({ onSend, loading }) {
         </div>
       </div>
       <p className="text-center text-xs text-ink/40 mt-2">
-        Photos of DSA, C++, OS or DBMS problems work best · <kbd className="font-mono">Enter</kbd> to send,{" "}
+        Photos, PDFs and documents work for any subject · <kbd className="font-mono">Enter</kbd> to send,{" "}
         <kbd className="font-mono">Shift + Enter</kbd> for a new line
       </p>
     </div>

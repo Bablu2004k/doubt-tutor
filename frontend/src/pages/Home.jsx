@@ -80,7 +80,7 @@ export default function Home() {
           {
             id: nextId(),
             role: "user",
-            text: problem.sourceType === "text" ? problem.rawText : "📷 Photo problem",
+            text: problem.rawText || (problem.sourceType === "document" ? "📄 Document" : "📷 Photo problem"),
           },
           {
             id: nextId(),
@@ -101,8 +101,8 @@ export default function Home() {
 
   const runCreateProblem = async ({ text, file }) => {
     return file
-      ? problemApi.createFromImage(file, "DSA", sessionIdRef.current)
-      : problemApi.createFromText(text, "DSA", sessionIdRef.current);
+      ? problemApi.createFromImage(file, "General", sessionIdRef.current, text)
+      : problemApi.createFromText(text, "General", sessionIdRef.current);
   };
 
   const handleSend = async ({ text, file }) => {
@@ -174,7 +174,13 @@ export default function Home() {
 
   const { getRootProps, isDragActive } = useDropzone({
     onDrop,
-    accept: { "image/*": [] },
+    accept: {
+      "image/*": [],
+      "application/pdf": [".pdf"],
+      "text/plain": [".txt"],
+      "text/markdown": [".md"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+    },
     multiple: false,
     noClick: true,
   });
@@ -188,7 +194,7 @@ export default function Home() {
           style={{ "--pop-origin": "center" }}
           className="pop-in absolute inset-0 z-10 bg-accent/10 border-4 border-dashed border-accent m-4 rounded-3xl flex items-center justify-center pointer-events-none"
         >
-          <p className="text-accent font-display text-xl">Drop your photo to break it down</p>
+          <p className="text-accent font-display text-xl">Drop your photo or document to break it down</p>
         </div>
       )}
 
@@ -206,14 +212,14 @@ export default function Home() {
               {greeting()}. What's <span className="text-accent">stuck</span> in your head today?
             </p>
             <p className="text-slate mt-1 max-w-sm">
-              Upload a photo of your problem or type it in — I'll work through it with you, then quiz you on it.
+              Ask anything — type it, or upload a photo or document — — I'll work through it with you, then quiz you on it.
             </p>
             <div className="flex flex-wrap justify-center gap-2 mt-6">
               {[
                 { title: "Explain a concept", sub: "Break it down simply", cls: "doubt-chip--explain", text: "Explain recursion with an example" },
                 { title: "Debug my code", sub: "Paste or photo it", cls: "doubt-chip--debug", text: "Debug my segfault" },
-                { title: "Quiz me", sub: "Test what I know", cls: "doubt-chip--quiz", text: "Quiz me on Big-O" },
-                { title: "Build a roadmap", sub: "Plan my prep", cls: "doubt-chip--roadmap", text: "Help me build a DSA prep roadmap" },
+                { title: "Quiz me", sub: "Test what I know", cls: "doubt-chip--quiz", text: "Quiz me on photosynthesis" },
+                { title: "Build a roadmap", sub: "Plan my prep", cls: "doubt-chip--roadmap", text: "Help me build a study roadmap" },
               ].map((c, i) => (
                 <button
                   key={c.title}
