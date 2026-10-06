@@ -60,7 +60,7 @@ export default function ChatComposer({ onSend, loading }) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto w-full px-4 pb-6 pt-2">
+    <div className="relative z-10 max-w-3xl mx-auto w-full px-4 pb-6 pt-2">
       <div className="glass rounded-3xl p-2">
         {preview && (
           <div className="flex items-center gap-2 px-2 pt-2">
