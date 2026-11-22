@@ -331,7 +331,7 @@ export default function ChatComposer({ onSend, loading }) {
             }}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder={transcribing ? "Transcribing your voice..." : listening ? "Listening... speak your doubt" : "Ask a doubt, paste a problem, or attach a photo..."}
+            placeholder={transcribing ? "Transcribing your voice..." : listening ? "Listening... speak your doubt" : "Ask anything..."}
             className="flex-1 resize-none bg-transparent text-ink text-sm placeholder:text-slate/70 focus:outline-none py-2 max-h-[200px]"
           />
 
@@ -385,10 +385,6 @@ export default function ChatComposer({ onSend, loading }) {
           }}
         />
       )}
-      <p className="text-center text-xs text-ink/40 mt-2">
-        Photos, PDFs and documents work for any subject · <kbd className="font-mono">Enter</kbd> to send,{" "}
-        <kbd className="font-mono">Shift + Enter</kbd> for a new line
-      </p>
     </div>
   );
 }

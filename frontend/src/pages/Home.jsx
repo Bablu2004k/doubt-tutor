@@ -228,7 +228,7 @@ export default function Home() {
               {greeting()}. What's <span className="text-accent">stuck</span> in your head today?
             </p>
             <p className="text-slate mt-1 max-w-sm">
-              Ask anything — type it, or upload a photo or document — — I'll work through it with you, then quiz you on it.
+              I'll work through it with you, then quiz you on it.
             </p>
             <div className="flex flex-wrap justify-center gap-2 mt-6">
               {[
