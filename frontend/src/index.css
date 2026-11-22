@@ -653,3 +653,109 @@ html, body, .glass, .glass-strong { transition: background-color 400ms var(--eas
 @media (prefers-reduced-motion: reduce) {
   .message-in, .send-ready, .typing-dot, .skeleton, .doubt-chip { animation: none !important; transition: none !important; }
 }
+
+/* =====================================================================
+   "Ember Glass" redesign: black glass + soft coral in dark mode,
+   warm porcelain + coral in light mode. Declared last so it overrides
+   the earlier tokens without touching component code.
+   ===================================================================== */
+html {
+  --ink: 38 28 30;
+  --forest: 192 68 74;
+  --accent: 200 76 80;
+  --signal: 28 138 90;
+  --flag: 190 50 90;
+  --paper: 255 255 255;
+  --cloud: 250 244 242;
+  --slate: 120 104 108;
+  --mauve: 232 140 136;
+  --lilac: 240 170 160;
+  --glass-tint: 255 255 255;
+  --glass-shadow: 120 50 50;
+  --orb-a: 244 150 140;
+  --orb-b: 250 190 170;
+  --orb-c: 226 120 120;
+  --chip1-bg: 253 235 232; --chip1-fg: 188 64 70;
+  --chip2-bg: 250 232 240; --chip2-fg: 170 50 100;
+  --chip3-bg: 230 246 238; --chip3-fg: 28 130 86;
+  --chip4-bg: 254 241 226; --chip4-fg: 176 108 20;
+}
+html[data-theme="dark"] {
+  --ink: 247 238 236;
+  --forest: 192 70 76;
+  --accent: 240 144 140;
+  --signal: 120 220 170;
+  --flag: 245 140 170;
+  --paper: 18 12 13;
+  --cloud: 8 6 7;
+  --slate: 176 160 160;
+  --mauve: 232 120 122;
+  --lilac: 214 100 104;
+  --glass-tint: 34 24 25;
+  --glass-shadow: 0 0 0;
+  --orb-a: 222 100 98;
+  --orb-b: 150 52 58;
+  --orb-c: 242 150 144;
+  --chip1-bg: 52 26 28; --chip1-fg: 248 176 172;
+  --chip2-bg: 50 28 42; --chip2-fg: 240 150 190;
+  --chip3-bg: 22 44 34; --chip3-fg: 120 220 170;
+  --chip4-bg: 54 40 22; --chip4-fg: 255 196 120;
+}
+html[data-theme="dark"] body {
+  background-image:
+    radial-gradient(ellipse 900px 650px at 8% -10%, rgb(var(--orb-a) / 0.30), transparent 60%),
+    radial-gradient(ellipse 750px 550px at 100% 10%, rgb(var(--orb-b) / 0.34), transparent 55%),
+    radial-gradient(ellipse 800px 700px at 45% 115%, rgb(var(--orb-c) / 0.14), transparent 60%);
+}
+
+/* Glass: brighter edge, soft inner highlight, deeper blur */
+.glass, .glass-strong {
+  border: 1px solid rgb(255 255 255 / 0.14);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.12), 0 10px 40px rgb(var(--glass-shadow) / 0.22);
+}
+html:not([data-theme="dark"]) .glass,
+html:not([data-theme="dark"]) .glass-strong {
+  border-color: rgb(255 255 255 / 0.7);
+  background-color: rgb(255 255 255 / 0.55);
+}
+
+/* Primary buttons get a soft coral sheen in dark mode */
+html[data-theme="dark"] .bg-accent {
+  background-image: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--mauve)));
+  box-shadow: 0 6px 20px -8px rgb(var(--accent) / 0.6);
+}
+
+/* Answer card: was a cream notebook page, now a glass sheet in the theme */
+.paper-card, html[data-theme="dark"] .paper-card {
+  background-color: rgb(var(--glass-tint) / 0.5);
+  background-image: none;
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgb(255 255 255 / 0.14);
+  border-radius: 22px;
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.1), 0 12px 40px rgb(var(--glass-shadow) / 0.25);
+  padding-left: 24px !important;
+  --ink: 38 28 30; --slate: 120 104 108; --accent: 200 76 80;
+  --signal: 28 138 90; --flag: 190 50 90; --paper: 255 255 255;
+}
+html:not([data-theme="dark"]) .paper-card { background-color: rgb(255 255 255 / 0.7); }
+html[data-theme="dark"] .paper-card {
+  --ink: 247 238 236; --slate: 176 160 160; --accent: 240 144 140;
+  --signal: 120 220 170; --flag: 245 140 170; --paper: 18 12 13;
+}
+.paper-card::before { display: none; }
+
+/* Answer text follows the theme instead of fixed browns */
+.solution-prose, .solution-prose p, .solution-prose ul, .solution-prose ol { color: rgb(var(--ink) / 0.92); }
+.solution-prose strong, .solution-prose h1, .solution-prose h2, .solution-prose h3 { color: rgb(var(--ink)); }
+.solution-prose h1, .solution-prose h2, .solution-prose h3 { font-family: "Space Grotesk", "Inter", sans-serif; letter-spacing: -0.01em; }
+.solution-prose li::marker { color: rgb(var(--accent)); }
+.solution-prose code { background: rgb(var(--ink) / 0.1); color: rgb(var(--accent)); }
+.solution-prose pre { background: rgb(14 10 11 / 0.92); border: 1px solid rgb(255 255 255 / 0.08); }
+.solution-prose pre code { color: #f3e9e7; background: none; }
+.solution-prose blockquote { border-left: 2px solid rgb(var(--accent) / 0.7); color: rgb(var(--slate)); }
+.solution-prose a { color: rgb(var(--accent)); }
+.solution-prose th, .solution-prose td { border: 1px solid rgb(var(--ink) / 0.16); }
+
+/* Titles use the display face for a more designed feel */
+h1, h2 { font-family: "Space Grotesk", "Inter", sans-serif; letter-spacing: -0.015em; }
