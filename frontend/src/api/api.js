@@ -28,6 +28,14 @@ export const problemApi = {
   toggleSessionPin: (sessionId) => axiosClient.patch(`/problems/session/${sessionId}/pin`),
 };
 
+export const transcribeApi = {
+  send: (wavBlob) => {
+    const form = new FormData();
+    form.append("audio", wavBlob, "speech.wav");
+    return axiosClient.post("/transcribe", form);
+  },
+};
+
 export const attemptApi = {
   submit: (questionId, submittedAnswer) =>
     axiosClient.post("/attempts", { questionId, submittedAnswer }),

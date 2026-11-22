@@ -152,6 +152,35 @@ function toGeminiParts(content) {
 }
 
 /**
+ * Speech-to-text fallback for browsers without the Web Speech API
+ * (Firefox, Brave, some mobile browsers). Expects WAV audio.
+ */
+export async function transcribeAudio({ audioBase64, mimeType = "audio/wav" }) {
+  const model = process.env.GEMINI_MODEL || "gemini-3.1-flash-lite";
+  const url = `${GEMINI_URL}/${model}:generateContent?key=${process.env.GEMINI_API_KEY}`;
+  const body = {
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inline_data: { mime_type: mimeType, data: audioBase64 } },
+          {
+            text:
+              "Transcribe this speech exactly as spoken, in the language spoken. " +
+              "Return only the transcript text, with no commentary and no quotes. " +
+              "If there is no speech, return an empty string.",
+          },
+        ],
+      },
+    ],
+    generationConfig: { maxOutputTokens: 1500 },
+  };
+  const data = await fetchWithRetry(url, body);
+  const part = data.candidates?.[0]?.content?.parts?.find((p) => typeof p.text === "string");
+  return (part?.text || "").trim();
+}
+
+/**
  * Parses an uploaded problem (image or text) into a clean statement,
  * a topic tag, and an ordered list of solution steps.
  * @param {{ text?: string, imageBase64?: string, mediaType?: string, subject: string }} input

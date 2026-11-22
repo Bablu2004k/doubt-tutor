@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import problemRoutes from "./routes/problemRoutes.js";
 import attemptRoutes from "./routes/attemptRoutes.js";
 import roadmapRoutes from "./routes/roadmapRoutes.js";
+import transcribeRoutes from "./routes/transcribeRoutes.js";
 import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/attempts", attemptRoutes);
 app.use("/api/roadmap", roadmapRoutes);
+app.use("/api/transcribe", transcribeRoutes);
 
 app.use(errorHandler);
 

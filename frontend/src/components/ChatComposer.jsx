@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import CameraCapture from "./CameraCapture";
+import { transcribeApi } from "../api/api.js";
+import { blobToWav16k } from "../utils/audio.js";
 
 const SpeechRecognition =
   typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
@@ -18,6 +20,9 @@ export default function ChatComposer({ onSend, loading }) {
   const [voiceError, setVoiceError] = useState("");
   const recognitionRef = useRef(null);
   const baseTextRef = useRef("");
+  const mediaRef = useRef(null);
+  const fellBackRef = useRef(false);
+  const [transcribing, setTranscribing] = useState(false);
 
   const canSend = (text.trim() || file) && !loading;
 
@@ -48,18 +53,81 @@ export default function ChatComposer({ onSend, loading }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  useEffect(() => () => recognitionRef.current?.abort(), []);
+  useEffect(
+    () => () => {
+      recognitionRef.current?.abort();
+      const rec = mediaRef.current?.recorder;
+      if (rec && rec.state === "recording") rec.stop();
+    },
+    []
+  );
+
+  // Fallback for browsers without the Web Speech API (Firefox, Brave, some
+  // mobile browsers): record audio, convert to WAV, transcribe on the server.
+  const startRecorder = async () => {
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === "undefined") {
+      setVoiceError("Voice input isn't supported in this browser.");
+      fellBackRef.current = false;
+      setListening(false);
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const chunks = [];
+      recorder.ondataavailable = (e) => e.data.size && chunks.push(e.data);
+      recorder.onstop = async () => {
+        clearTimeout(mediaRef.current?.timer);
+        stream.getTracks().forEach((t) => t.stop());
+        fellBackRef.current = false;
+        setListening(false);
+        if (!chunks.length) return;
+        setTranscribing(true);
+        try {
+          const wav = await blobToWav16k(new Blob(chunks, { type: recorder.mimeType }));
+          const { data } = await transcribeApi.send(wav);
+          if (data.text) {
+            setText((prev) => (prev ? prev.replace(/\s*$/, " ") : "") + data.text);
+            requestAnimationFrame(() => textareaRef.current && autoGrow(textareaRef.current));
+          } else {
+            setVoiceError("Didn't catch any speech. Try again.");
+          }
+        } catch {
+          setVoiceError("Couldn't transcribe that. Please try again.");
+        } finally {
+          setTranscribing(false);
+        }
+      };
+      mediaRef.current = {
+        recorder,
+        // Safety stop so a forgotten recording never runs forever.
+        timer: setTimeout(() => recorder.state === "recording" && recorder.stop(), 60000),
+      };
+      recorder.start();
+      setListening(true);
+    } catch (e) {
+      fellBackRef.current = false;
+      setListening(false);
+      setVoiceError(
+        e?.name === "NotAllowedError"
+          ? "Microphone permission was blocked. Allow it in your browser's site settings."
+          : "Couldn't access the microphone."
+      );
+    }
+  };
 
   const toggleVoice = () => {
     if (listening) {
-      recognitionRef.current?.stop();
+      if (mediaRef.current?.recorder?.state === "recording") mediaRef.current.recorder.stop();
+      else recognitionRef.current?.stop();
       return;
     }
-    if (!SpeechRecognition) {
-      setVoiceError("Voice input isn't supported in this browser. Try Chrome or Edge.");
-      return;
-    }
+    if (transcribing) return;
     setVoiceError("");
+    if (!SpeechRecognition) {
+      startRecorder();
+      return;
+    }
     const rec = new SpeechRecognition();
     rec.lang = navigator.language || "en-IN";
     rec.continuous = true;
@@ -69,18 +137,24 @@ export default function ChatComposer({ onSend, loading }) {
     rec.onresult = (e) => {
       let transcript = "";
       for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
-      const next = baseTextRef.current + transcript;
-      setText(next);
+      setText(baseTextRef.current + transcript);
       requestAnimationFrame(() => textareaRef.current && autoGrow(textareaRef.current));
     };
     rec.onerror = (e) => {
-      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+      if (e.error === "not-allowed") {
         setVoiceError("Microphone permission was blocked. Allow it in your browser's site settings.");
+      } else if (["network", "service-not-allowed", "language-not-supported"].includes(e.error)) {
+        // Browser exposes the API but its speech service is unavailable
+        // (Brave, some Chromium builds): use the server-side fallback.
+        fellBackRef.current = true;
+        startRecorder();
       } else if (e.error !== "no-speech" && e.error !== "aborted") {
         setVoiceError("Voice input stopped unexpectedly. Try again.");
       }
     };
-    rec.onend = () => setListening(false);
+    rec.onend = () => {
+      if (!fellBackRef.current) setListening(false);
+    };
     recognitionRef.current = rec;
     try {
       rec.start();
@@ -257,16 +331,17 @@ export default function ChatComposer({ onSend, loading }) {
             }}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder={listening ? "Listening... speak your doubt" : "Ask a doubt, paste a problem, or attach a photo..."}
+            placeholder={transcribing ? "Transcribing your voice..." : listening ? "Listening... speak your doubt" : "Ask a doubt, paste a problem, or attach a photo..."}
             className="flex-1 resize-none bg-transparent text-ink text-sm placeholder:text-slate/70 focus:outline-none py-2 max-h-[200px]"
           />
 
           <button
             type="button"
             onClick={toggleVoice}
+            disabled={transcribing}
             title={listening ? "Stop listening" : "Speak your doubt"}
             aria-pressed={listening}
-            className={`press mic-btn shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-150 ${
+            className={`press mic-btn shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-150 disabled:opacity-40 ${
               listening ? "is-on text-white bg-flag" : "text-slate hover:text-ink hover:bg-ink/5"
             }`}
           >
