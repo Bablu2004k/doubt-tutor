@@ -289,8 +289,8 @@ function AssistantTurn({ message, onGenerateQuestion, onAnswer, onRegenerate, on
         {[0, 1, 2].map((i) => (
           <span
             key={i}
-            className="w-1.5 h-1.5 rounded-full bg-accent/60 animate-bounce"
-            style={{ animationDelay: `${i * 0.12}s` }}
+            className="typing-dot w-2 h-2 rounded-full bg-accent/70"
+            style={{ animationDelay: `${i * 0.16}s` }}
           />
         ))}
       </div>

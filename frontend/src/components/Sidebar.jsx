@@ -185,7 +185,10 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
 
       <div className="px-5 pt-5 pb-2 text-xs font-medium uppercase tracking-wide text-ink/40">Recent doubts</div>
       <div className="flex-1 overflow-y-auto themed-scroll px-3 pb-3 space-y-1">
-        {loadingRecent && <p className="px-3 text-xs text-ink/40">Loading...</p>}
+        {loadingRecent &&
+          [78, 62, 70, 54].map((w, i) => (
+            <div key={i} className="skeleton h-9 rounded-xl" style={{ width: `${w}%`, marginLeft: 12 }} />
+          ))}
         {!loadingRecent && recent.length === 0 && (
           <p className="px-3 text-xs text-ink/40">Nothing here yet — ask your first doubt!</p>
         )}

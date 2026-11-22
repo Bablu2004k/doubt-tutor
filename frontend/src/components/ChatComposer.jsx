@@ -281,7 +281,7 @@ export default function ChatComposer({ onSend, loading }) {
             onClick={handleSend}
             disabled={!canSend}
             title="Send"
-            className="press shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-accent text-paper disabled:opacity-30 transition-[opacity,transform] duration-150 hover:opacity-90 shadow-sm"
+            className={`press shrink-0 w-9 h-9 rounded-full flex items-center justify-center bg-accent text-paper disabled:opacity-30 transition-[opacity,transform] duration-150 hover:opacity-90 shadow-sm ${canSend ? "send-ready" : ""}`}
           >
             {loading ? (
               <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4 animate-spin">
