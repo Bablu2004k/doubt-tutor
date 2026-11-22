@@ -8,8 +8,8 @@ export const authApi = {
 export const problemApi = {
   // sessionId groups every follow-up into the same chat. Pass the current
   // chat's sessionId (or leave it undefined to start a brand-new chat).
-  createFromText: (text, subject, sessionId) =>
-    axiosClient.post("/problems", { text, subject, sessionId }),
+  createFromText: (text, subject, sessionId, extra = {}) =>
+    axiosClient.post("/problems", { text, subject, sessionId, ...extra }),
   createFromImage: (file, subject, sessionId, text) => {
     const form = new FormData();
     form.append("image", file);

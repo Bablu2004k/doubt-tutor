@@ -154,7 +154,16 @@ function toGeminiParts(content) {
  * a topic tag, and an ordered list of solution steps.
  * @param {{ text?: string, imageBase64?: string, mediaType?: string, subject: string }} input
  */
-export async function breakDownProblem({ text, fileBase64, mediaType, subject }) {
+export async function breakDownProblem({ text, fileBase64, mediaType, subject, wantsDocument = false, context = "" }) {
+  const documentRules = `
+
+DOCUMENT MODE: the student asked for a downloadable PDF. Ignore the advice
+above about avoiding headings and lists. Write "solution" as a complete,
+well-organised study document in markdown: start with a short intro, use
+"## " section headings, bullet lists, bold key terms, tables or worked
+examples where useful, and end with a brief summary. Cover the topic
+thoroughly (roughly 500-900 words) and do NOT mention the PDF, downloading,
+or these instructions inside the document itself.`;
   const system = `You are an outstanding tutor, expert in every subject (science, maths,
 humanities, languages, commerce, computer science, general knowledge, etc.),
 answering a student's doubt. Given their problem (as an image, a document, or as text), respond with ONLY a
@@ -184,7 +193,8 @@ Use markdown, but lightly and only where it genuinely helps:
   the problem truly has distinct parts (e.g. two sub-questions).
 
 Be thorough but not padded — every sentence should earn its place. Close
-with the concrete answer/result clearly stated, not buried in the middle.`;
+with the concrete answer/result clearly stated, not buried in the middle.`
+    + (wantsDocument ? documentRules : "");
 
   const content = [];
   if (fileBase64) {
@@ -195,13 +205,15 @@ with the concrete answer/result clearly stated, not buried in the middle.`;
   }
   content.push({
     type: "text",
-    text: text || `Answer the question/problem shown in the attached file. Subject hint: ${subject}.`,
+    text:
+      (text || `Answer the question/problem shown in the attached file. Subject hint: ${subject}.`) +
+      (context ? `\n\nUse this earlier answer as source material:\n${context}` : ""),
   });
 
   return callGemini({
     system,
     messages: [{ role: "user", content }],
-    maxTokens: 2000,
+    maxTokens: wantsDocument ? 4096 : 2000,
   });
 }
 

@@ -14,6 +14,10 @@ import { breakDownProblem, generatePracticeQuestion } from "../services/llmServi
 export async function createProblem(req, res, next) {
   try {
     const { text, subject = "General", sessionId: incomingSessionId } = req.body;
+    // When the student asks for a PDF/notes document, the LLM writes a fuller,
+    // well-structured document. `context` is an earlier answer to base it on.
+    const wantsDocument = req.body.wantsPdf === true || req.body.wantsPdf === "true";
+    const context = typeof req.body.context === "string" ? req.body.context.slice(0, 8000) : "";
     const file = req.file;
 
     if (!text && !file) {
@@ -53,8 +57,9 @@ export async function createProblem(req, res, next) {
             mediaType: isPdf ? "application/pdf" : mime.startsWith("image/") ? mime : "image/jpeg",
             text,
             subject,
+            wantsDocument,
           })
-        : await breakDownProblem({ text: combinedText, subject });
+        : await breakDownProblem({ text: combinedText, subject, wantsDocument, context });
 
     const problem = await Problem.create({
       user: req.userId,

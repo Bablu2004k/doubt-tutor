@@ -2,6 +2,7 @@ import { useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DownloadMenu from "./DownloadMenu.jsx";
+import { downloadPDF } from "../utils/exportDoc.js";
 
 function CodeBlock({ className, children }) {
   const [copied, setCopied] = useState(false);
@@ -30,6 +31,7 @@ export default function SolutionView({
   onRegenerate,
   regenerating,
   onFollowUp,
+  pdfReady,
 }) {
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState(null); // "up" | "down" | null
@@ -91,6 +93,19 @@ export default function SolutionView({
           </button>
         </div>
       </div>
+
+      {pdfReady && (
+        <button
+          type="button"
+          onClick={() => downloadPDF(topic || "Study notes", solution)}
+          className="press fade-in w-full flex items-center justify-center gap-2 mb-4 rounded-2xl bg-accent text-paper py-3 text-sm font-medium shadow-sm"
+        >
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
+          </svg>
+          Your PDF is ready - download again
+        </button>
+      )}
 
       <div className="solution-prose text-sm">
         <ReactMarkdown

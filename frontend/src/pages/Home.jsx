@@ -8,6 +8,17 @@ import QuizCard from "../components/QuizCard.jsx";
 import AmbientOrb from "../components/AmbientOrb.jsx";
 import HeroOrb from "../components/HeroOrb.jsx";
 import { problemApi, attemptApi } from "../api/api.js";
+import { downloadPDF } from "../utils/exportDoc.js";
+
+// "make a pdf of photosynthesis", "give me notes as a PDF", "generate pdf for this"
+function wantsPdfIntent(text) {
+  if (!text) return false;
+  return (
+    /\b(pdf|printable)\b/i.test(text) &&
+    /\b(make|create|generate|give|get|prepare|export|download|write|build|send|need|want|provide|convert|turn|save|can you|could you)\b/i.test(text)
+  );
+}
+const REFERS_TO_PREVIOUS = /\b(this|that|it|above|previous|last|same|these|those)\b/i;
 
 let idCounter = 0;
 const nextId = () => `m${++idCounter}`;
@@ -99,10 +110,10 @@ export default function Home() {
       });
   }, [openSessionId]);
 
-  const runCreateProblem = async ({ text, file }) => {
+  const runCreateProblem = async ({ text, file, wantsPdf, context }) => {
     return file
       ? problemApi.createFromImage(file, "General", sessionIdRef.current, text)
-      : problemApi.createFromText(text, "General", sessionIdRef.current);
+      : problemApi.createFromText(text, "General", sessionIdRef.current, { wantsPdf, context });
   };
 
   const handleSend = async ({ text, file }) => {
@@ -116,9 +127,29 @@ export default function Home() {
     const assistantId = addMessage({ role: "assistant", status: "loading" });
     setLoading(true);
 
+    // PDF request: write a full document and download it automatically.
+    const wantsPdf = !file && wantsPdfIntent(text);
+    let context = "";
+    if (wantsPdf && REFERS_TO_PREVIOUS.test(text)) {
+      const last = [...messages].reverse().find((m) => m.problem?.solution);
+      if (last) context = last.problem.solution;
+    }
+
     try {
-      const { data } = await runCreateProblem({ text, file });
-      updateMessage(assistantId, { status: "done", problem: data, originalInput: { text, file } });
+      const { data } = await runCreateProblem({ text, file, wantsPdf, context });
+      updateMessage(assistantId, {
+        status: "done",
+        problem: data,
+        wantsPdf,
+        originalInput: { text, file, wantsPdf, context },
+      });
+      if (wantsPdf) {
+        try {
+          await downloadPDF(data.topic || "Study notes", data.solution);
+        } catch {
+          // The visible "Download PDF" button below is the fallback.
+        }
+      }
       // First turn of a brand-new chat: lock in its sessionId so every
       // follow-up in this conversation reuses it, and reflect it in the
       // URL so refreshing/sharing the link reopens the whole chat.
@@ -312,6 +343,7 @@ function AssistantTurn({ message, onGenerateQuestion, onAnswer, onRegenerate, on
         onRegenerate={onRegenerate}
         regenerating={regenerating}
         onFollowUp={onFollowUp}
+        pdfReady={message.wantsPdf}
       />
 
       {!question && (
