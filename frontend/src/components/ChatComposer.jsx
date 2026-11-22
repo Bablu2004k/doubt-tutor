@@ -1,4 +1,8 @@
 import { useEffect, useRef, useState } from "react";
+import CameraCapture from "./CameraCapture";
+
+const SpeechRecognition =
+  typeof window !== "undefined" ? window.SpeechRecognition || window.webkitSpeechRecognition : null;
 
 export default function ChatComposer({ onSend, loading }) {
   const [text, setText] = useState("");
@@ -9,6 +13,11 @@ export default function ChatComposer({ onSend, loading }) {
   const fileInputRef = useRef(null);
   const attachMenuRef = useRef(null);
   const textareaRef = useRef(null);
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [listening, setListening] = useState(false);
+  const [voiceError, setVoiceError] = useState("");
+  const recognitionRef = useRef(null);
+  const baseTextRef = useRef("");
 
   const canSend = (text.trim() || file) && !loading;
 
@@ -39,6 +48,48 @@ export default function ChatComposer({ onSend, loading }) {
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
+  useEffect(() => () => recognitionRef.current?.abort(), []);
+
+  const toggleVoice = () => {
+    if (listening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+    if (!SpeechRecognition) {
+      setVoiceError("Voice input isn't supported in this browser. Try Chrome or Edge.");
+      return;
+    }
+    setVoiceError("");
+    const rec = new SpeechRecognition();
+    rec.lang = navigator.language || "en-IN";
+    rec.continuous = true;
+    rec.interimResults = true;
+    baseTextRef.current = text ? text.replace(/\s*$/, " ") : "";
+
+    rec.onresult = (e) => {
+      let transcript = "";
+      for (let i = 0; i < e.results.length; i++) transcript += e.results[i][0].transcript;
+      const next = baseTextRef.current + transcript;
+      setText(next);
+      requestAnimationFrame(() => textareaRef.current && autoGrow(textareaRef.current));
+    };
+    rec.onerror = (e) => {
+      if (e.error === "not-allowed" || e.error === "service-not-allowed") {
+        setVoiceError("Microphone permission was blocked. Allow it in your browser's site settings.");
+      } else if (e.error !== "no-speech" && e.error !== "aborted") {
+        setVoiceError("Voice input stopped unexpectedly. Try again.");
+      }
+    };
+    rec.onend = () => setListening(false);
+    recognitionRef.current = rec;
+    try {
+      rec.start();
+      setListening(true);
+    } catch {
+      setListening(false);
+    }
+  };
+
   const autoGrow = (el) => {
     el.style.height = "auto";
     el.style.height = `${Math.min(el.scrollHeight, 200)}px`;
@@ -46,6 +97,7 @@ export default function ChatComposer({ onSend, loading }) {
 
   const handleSend = () => {
     if (!canSend) return;
+    recognitionRef.current?.stop();
     onSend({ text: text.trim(), file });
     setText("");
     clearFile();
@@ -61,7 +113,7 @@ export default function ChatComposer({ onSend, loading }) {
 
   return (
     <div className="relative z-10 max-w-3xl mx-auto w-full px-4 pb-6 pt-2">
-      <div className="glass rounded-3xl p-2">
+      <div className={`glass composer-shell rounded-3xl p-2 ${listening ? "is-listening" : ""}`}>
         {preview && (
           <div className="flex items-center gap-2 px-2 pt-2">
             <div className="relative">
@@ -113,8 +165,27 @@ export default function ChatComposer({ onSend, loading }) {
             {attachMenuOpen && (
               <div
                 style={{ "--pop-origin": "bottom left" }}
-                className="pop-in absolute left-0 bottom-full mb-2 w-52 rounded-2xl border border-ink/10 bg-paper shadow-lg overflow-hidden z-20"
+                className="pop-in absolute left-0 bottom-full mb-2 w-56 rounded-2xl border border-ink/10 bg-paper shadow-lg overflow-hidden z-20"
               >
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAttachMenuOpen(false);
+                    setCameraOpen(true);
+                  }}
+                  className="press w-full flex items-center gap-3 px-3.5 py-2.5 text-sm text-ink transition-colors duration-150 hover:bg-ink/5"
+                >
+                  <span className="w-7 h-7 rounded-full bg-mauve/30 text-accent flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-3.5 h-3.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 8h3l2-3h6l2 3h3v11H4V8Z" />
+                      <circle cx="12" cy="13" r="3.5" strokeWidth={1.75} />
+                    </svg>
+                  </span>
+                  <span>
+                    Camera
+                    <span className="block text-xs text-slate">Take a picture right now</span>
+                  </span>
+                </button>
                 <button
                   type="button"
                   onClick={() => {
@@ -132,7 +203,7 @@ export default function ChatComposer({ onSend, loading }) {
                   </span>
                   <span>
                     Photo
-                    <span className="block text-xs text-slate">Snap or pick an image of the problem</span>
+                    <span className="block text-xs text-slate">Pick an image from your device</span>
                   </span>
                 </button>
                 <button
@@ -186,9 +257,24 @@ export default function ChatComposer({ onSend, loading }) {
             }}
             onKeyDown={handleKeyDown}
             rows={1}
-            placeholder="Ask a doubt, paste a problem, or attach a photo..."
+            placeholder={listening ? "Listening... speak your doubt" : "Ask a doubt, paste a problem, or attach a photo..."}
             className="flex-1 resize-none bg-transparent text-ink text-sm placeholder:text-slate/70 focus:outline-none py-2 max-h-[200px]"
           />
+
+          <button
+            type="button"
+            onClick={toggleVoice}
+            title={listening ? "Stop listening" : "Speak your doubt"}
+            aria-pressed={listening}
+            className={`press mic-btn shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-colors duration-150 ${
+              listening ? "is-on text-white bg-flag" : "text-slate hover:text-ink hover:bg-ink/5"
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-5 h-5">
+              <rect x="9" y="3" width="6" height="11" rx="3" strokeWidth={1.75} />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+            </svg>
+          </button>
 
           <button
             type="button"
@@ -210,6 +296,20 @@ export default function ChatComposer({ onSend, loading }) {
           </button>
         </div>
       </div>
+      {voiceError && (
+        <p className="fade-in text-center text-xs text-flag mt-2" role="alert">
+          {voiceError}
+        </p>
+      )}
+      {cameraOpen && (
+        <CameraCapture
+          onClose={() => setCameraOpen(false)}
+          onCapture={(f) => {
+            setCameraOpen(false);
+            pickFile(f);
+          }}
+        />
+      )}
       <p className="text-center text-xs text-ink/40 mt-2">
         Photos, PDFs and documents work for any subject · <kbd className="font-mono">Enter</kbd> to send,{" "}
         <kbd className="font-mono">Shift + Enter</kbd> for a new line

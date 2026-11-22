@@ -536,3 +536,49 @@ html[data-theme="dark"] .paper-card {
 textarea {
   font-family: inherit;
 }
+
+
+/* ---- Polish layer: smoother, calmer, more "premium" feel ---- */
+html { scroll-behavior: smooth; }
+::selection { background: rgb(var(--accent) / 0.25); }
+
+button, a, textarea, input { -webkit-tap-highlight-color: transparent; }
+:focus-visible {
+  outline: 2px solid rgb(var(--accent) / 0.55);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* Composer: soft glow while focused or listening */
+.composer-shell {
+  transition: box-shadow 260ms var(--ease-out), border-color 260ms ease, transform 260ms var(--ease-out);
+}
+.composer-shell:focus-within {
+  box-shadow: 0 0 0 1px rgb(var(--accent) / 0.35), 0 10px 34px -10px rgb(var(--accent) / 0.35);
+}
+.composer-shell.is-listening {
+  box-shadow: 0 0 0 1px rgb(var(--flag) / 0.55), 0 10px 34px -10px rgb(var(--flag) / 0.45);
+}
+
+/* Mic: gentle pulse ring while recording */
+.mic-btn { position: relative; }
+.mic-btn.is-on::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  border: 2px solid rgb(var(--flag) / 0.6);
+  animation: mic-ring 1.4s ease-out infinite;
+}
+@keyframes mic-ring {
+  from { transform: scale(1); opacity: 0.9; }
+  to { transform: scale(1.7); opacity: 0; }
+}
+
+/* Cards lift slightly on hover for a tactile feel */
+.glass { transition: box-shadow 260ms var(--ease-out), border-color 260ms ease; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .mic-btn.is-on::after { animation: none; }
+}
