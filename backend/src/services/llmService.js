@@ -47,7 +47,9 @@ async function callGemini({ system, messages, maxTokens = 1500 }) {
 
   // Strip accidental markdown fences before parsing (belt-and-braces even
   // though responseMimeType: "application/json" should prevent them).
-  const cleaned = textPart.text.replace(/```json|```/g, "").trim();
+  // Only strip a wrapping fence: a global replace also deleted the ``` inside
+  // code answers, which is why code blocks never rendered.
+  const cleaned = textPart.text.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   return JSON.parse(cleaned);
 }
 
@@ -154,7 +156,7 @@ function toGeminiParts(content) {
  * a topic tag, and an ordered list of solution steps.
  * @param {{ text?: string, imageBase64?: string, mediaType?: string, subject: string }} input
  */
-export async function breakDownProblem({ text, fileBase64, mediaType, subject, wantsDocument = false, context = "" }) {
+export async function breakDownProblem({ text, fileBase64, mediaType, subject, wantsDocument = false, context = "", history = [] }) {
   const documentRules = `
 
 DOCUMENT MODE: the student asked for a downloadable PDF. Ignore the advice
@@ -163,7 +165,9 @@ well-organised study document in markdown: start with a short intro, use
 "## " section headings, bullet lists, bold key terms, tables or worked
 examples where useful, and end with a brief summary. Cover the topic
 thoroughly (roughly 500-900 words) and do NOT mention the PDF, downloading,
-or these instructions inside the document itself.`;
+or these instructions inside the document itself. If the student did not name
+a topic (for example just "give me a pdf"), base the document on the
+conversation so far.`;
   const system = `You are an outstanding tutor, expert in every subject (science, maths,
 humanities, languages, commerce, computer science, general knowledge, etc.),
 answering a student's doubt. Given their problem (as an image, a document, or as text), respond with ONLY a
@@ -193,7 +197,19 @@ Use markdown, but lightly and only where it genuinely helps:
   the problem truly has distinct parts (e.g. two sub-questions).
 
 Be thorough but not padded — every sentence should earn its place. Close
-with the concrete answer/result clearly stated, not buried in the middle.`
+with the concrete answer/result clearly stated, not buried in the middle.
+
+You are in an ongoing conversation: use the earlier messages for context, so
+follow-ups like "explain that simpler", "now in Python" or "give me a pdf"
+refer to what was discussed. Behave like a thoughtful, natural assistant:
+- If the student asks for code, lead with complete, working code in a fenced
+  block with the language tag (for example \`\`\`python), then a brief
+  explanation. Do not pad it with a lecture.
+- Match length to the question: a simple question gets a short, direct
+  answer; a casual message or greeting gets a brief, friendly reply (use the
+  topic "Chat"); a deep concept gets a fuller explanation.
+- Never ask clarifying questions unless the request is truly impossible to
+  answer; make a sensible assumption and say so in one line.`
     + (wantsDocument ? documentRules : "");
 
   const content = [];
@@ -212,7 +228,7 @@ with the concrete answer/result clearly stated, not buried in the middle.`
 
   return callGemini({
     system,
-    messages: [{ role: "user", content }],
+    messages: [...history, { role: "user", content }],
     maxTokens: wantsDocument ? 4096 : 2000,
   });
 }

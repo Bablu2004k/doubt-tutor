@@ -8,17 +8,13 @@ import QuizCard from "../components/QuizCard.jsx";
 import AmbientOrb from "../components/AmbientOrb.jsx";
 import HeroOrb from "../components/HeroOrb.jsx";
 import { problemApi, attemptApi } from "../api/api.js";
-import { downloadPDF } from "../utils/exportDoc.js";
 
-// "make a pdf of photosynthesis", "give me notes as a PDF", "generate pdf for this"
+// "give me a pdf", "make a PDF of photosynthesis", "notes as pdf"
 function wantsPdfIntent(text) {
-  if (!text) return false;
-  return (
-    /\b(pdf|printable)\b/i.test(text) &&
-    /\b(make|create|generate|give|get|prepare|export|download|write|build|send|need|want|provide|convert|turn|save|can you|could you)\b/i.test(text)
-  );
+  if (!text || !/\bpdf\b/i.test(text)) return false;
+  // "what is a pdf", "how does pdf work" are questions about PDFs, not requests
+  return !/\b(what is|what's|how does|how do|explain)\b[^.?]*\bpdf\b/i.test(text);
 }
-const REFERS_TO_PREVIOUS = /\b(this|that|it|above|previous|last|same|these|those)\b/i;
 
 let idCounter = 0;
 const nextId = () => `m${++idCounter}`;
@@ -110,10 +106,10 @@ export default function Home() {
       });
   }, [openSessionId]);
 
-  const runCreateProblem = async ({ text, file, wantsPdf, context }) => {
+  const runCreateProblem = async ({ text, file, wantsPdf }) => {
     return file
       ? problemApi.createFromImage(file, "General", sessionIdRef.current, text)
-      : problemApi.createFromText(text, "General", sessionIdRef.current, { wantsPdf, context });
+      : problemApi.createFromText(text, "General", sessionIdRef.current, { wantsPdf });
   };
 
   const handleSend = async ({ text, file }) => {
@@ -127,29 +123,18 @@ export default function Home() {
     const assistantId = addMessage({ role: "assistant", status: "loading" });
     setLoading(true);
 
-    // PDF request: write a full document and download it automatically.
+    // PDF request: the tutor writes the document (using the chat so far) and
+    // shows a PDF card with a Download button, instead of downloading blindly.
     const wantsPdf = !file && wantsPdfIntent(text);
-    let context = "";
-    if (wantsPdf && REFERS_TO_PREVIOUS.test(text)) {
-      const last = [...messages].reverse().find((m) => m.problem?.solution);
-      if (last) context = last.problem.solution;
-    }
 
     try {
-      const { data } = await runCreateProblem({ text, file, wantsPdf, context });
+      const { data } = await runCreateProblem({ text, file, wantsPdf });
       updateMessage(assistantId, {
         status: "done",
         problem: data,
         wantsPdf,
-        originalInput: { text, file, wantsPdf, context },
+        originalInput: { text, file, wantsPdf },
       });
-      if (wantsPdf) {
-        try {
-          await downloadPDF(data.topic || "Study notes", data.solution);
-        } catch {
-          // The visible "Download PDF" button below is the fallback.
-        }
-      }
       // First turn of a brand-new chat: lock in its sessionId so every
       // follow-up in this conversation reuses it, and reflect it in the
       // URL so refreshing/sharing the link reopens the whole chat.

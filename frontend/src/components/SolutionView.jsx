@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import DownloadMenu from "./DownloadMenu.jsx";
@@ -35,6 +35,24 @@ export default function SolutionView({
 }) {
   const [copied, setCopied] = useState(false);
   const [feedback, setFeedback] = useState(null); // "up" | "down" | null
+  const [speaking, setSpeaking] = useState(false);
+
+  useEffect(() => () => window.speechSynthesis?.cancel(), []);
+
+  const toggleSpeak = () => {
+    if (!("speechSynthesis" in window)) return;
+    if (speaking) {
+      window.speechSynthesis.cancel();
+      setSpeaking(false);
+      return;
+    }
+    const plain = solution.replace(/```[\s\S]*?```/g, " (code block) ").replace(/[#*_`>|]/g, "");
+    const u = new SpeechSynthesisUtterance(plain);
+    u.onend = () => setSpeaking(false);
+    u.onerror = () => setSpeaking(false);
+    setSpeaking(true);
+    window.speechSynthesis.speak(u);
+  };
 
   const copySolution = () => {
     navigator.clipboard.writeText(solution);
@@ -53,6 +71,17 @@ export default function SolutionView({
       <div className="flex items-center justify-between mb-3 gap-2">
         <DownloadMenu title={topic || "Doubt answer"} content={solution} />
         <div className="flex items-center gap-1">
+          <button
+            onClick={toggleSpeak}
+            title={speaking ? "Stop reading" : "Read aloud"}
+            className={`press w-7 h-7 rounded-full flex items-center justify-center transition-colors duration-150 hover:bg-ink/5 ${
+              speaking ? "text-accent" : "text-slate hover:text-ink"
+            }`}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M11 5 6 9H3v6h3l5 4V5Zm4 3a5 5 0 0 1 0 8m2.5-10.5a8.5 8.5 0 0 1 0 13" />
+            </svg>
+          </button>
           {onRegenerate && (
             <button
               onClick={onRegenerate}
@@ -95,16 +124,22 @@ export default function SolutionView({
       </div>
 
       {pdfReady && (
-        <button
-          type="button"
-          onClick={() => downloadPDF(topic || "Study notes", solution)}
-          className="press fade-in w-full flex items-center justify-center gap-2 mb-4 rounded-2xl bg-accent text-paper py-3 text-sm font-medium shadow-sm"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-4 h-4">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M12 3v12m0 0 4-4m-4 4-4-4M5 19h14" />
-          </svg>
-          Your PDF is ready - download again
-        </button>
+        <div className="fade-in mb-4 flex items-center gap-3 rounded-2xl border border-ink/10 bg-ink/5 p-3">
+          <div className="w-11 h-11 rounded-xl bg-accent/15 text-accent flex items-center justify-center shrink-0 text-[11px] font-semibold tracking-wide">
+            PDF
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-medium text-ink truncate">{topic || "Study notes"}.pdf</p>
+            <p className="text-xs text-slate">Study notes - ready to download</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => downloadPDF(topic || "Study notes", solution)}
+            className="press shrink-0 rounded-full bg-accent text-paper px-4 py-2 text-xs font-medium shadow-sm"
+          >
+            Download
+          </button>
+        </div>
       )}
 
       <div className="solution-prose text-sm">

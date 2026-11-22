@@ -26,6 +26,19 @@ export async function createProblem(req, res, next) {
 
     const sessionId = incomingSessionId || crypto.randomUUID();
 
+    // Earlier turns of this chat, so follow-ups understand what "this" means.
+    let history = [];
+    if (incomingSessionId) {
+      const prior = await Problem.find({ user: req.userId, sessionId: incomingSessionId })
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .lean();
+      history = prior.reverse().flatMap((p) => [
+        { role: "user", content: (p.rawText || p.problemStatement || "").slice(0, 2000) },
+        { role: "assistant", content: (p.solution || "").slice(0, 3000) },
+      ]);
+    }
+
     const ext = path.extname(file?.originalname || "").toLowerCase();
     const mime = file?.mimetype || "";
     const isImage = !!file && (mime.startsWith("image/") || [".jpg", ".jpeg", ".png", ".webp", ".gif", ".heic", ".heif"].includes(ext));
@@ -58,8 +71,9 @@ export async function createProblem(req, res, next) {
             text,
             subject,
             wantsDocument,
+            history,
           })
-        : await breakDownProblem({ text: combinedText, subject, wantsDocument, context });
+        : await breakDownProblem({ text: combinedText, subject, wantsDocument, context, history });
 
     const problem = await Problem.create({
       user: req.userId,
