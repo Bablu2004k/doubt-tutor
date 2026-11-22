@@ -5,6 +5,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Home from "./pages/Home.jsx";
 import Roadmap from "./pages/Roadmap.jsx";
 import Login from "./pages/Login.jsx";
+import Logo from "./components/Logo.jsx";
 
 export default function App() {
   const location = useLocation();
@@ -33,9 +34,7 @@ export default function App() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.75} d="M4 7h16M4 12h16M4 17h16" />
               </svg>
             </button>
-            <span className="w-6 h-6 rounded-md bg-accent text-paper flex items-center justify-center font-display text-xs font-semibold">
-              D
-            </span>
+            <Logo size={28} />
             <span className="font-display text-base tracking-tight text-ink">
               doubt<span className="text-accent">/</span>tutor
             </span>

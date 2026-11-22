@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import Logo from "../components/Logo.jsx";
 
 export default function Login() {
   const [mode, setMode] = useState("login"); // "login" | "register"
@@ -37,6 +38,7 @@ export default function Login() {
         onSubmit={handleSubmit}
         className="glass rounded-3xl p-8 w-full max-w-sm message-in"
       >
+        <Logo size={56} className="mb-4" />
         <p className="font-display text-xl text-ink mb-1">
           {mode === "login" ? "Welcome back" : "Create your account"}
         </p>

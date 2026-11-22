@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { useTheme } from "../context/ThemeContext.jsx";
 import { problemApi } from "../api/api.js";
+import Logo from "./Logo.jsx";
 
 const links = [
   {
@@ -129,9 +130,7 @@ export default function Sidebar({ open = false, onClose = () => {} }) {
         lg:static lg:translate-x-0 lg:z-auto lg:w-72 lg:max-w-none lg:shrink-0 lg:h-[calc(100dvh-2rem)] lg:rounded-3xl`}
       >
         <div className="px-5 py-5 flex items-center gap-2 border-b border-ink/10">
-          <span className="w-7 h-7 rounded-lg bg-accent text-paper flex items-center justify-center font-display text-sm font-semibold">
-            D
-          </span>
+          <Logo size={32} />
           <span className="font-display text-lg tracking-tight text-ink">
             doubt<span className="text-accent">/</span>tutor
           </span>
